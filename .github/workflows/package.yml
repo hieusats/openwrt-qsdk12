@@ -1,0 +1,65 @@
+name: Package RD15 UBI image
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_run:
+        description: 'Run ID of the build workflow whose artifact to package'
+        required: true
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Download firmware artifact from build run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p fw && cd fw
+          gh run download "${{ inputs.build_run }}" --repo ${{ github.repository }} --name rd15-firmware || \
+            gh run download "${{ inputs.build_run }}" --repo ${{ github.repository }}
+          find . -type f | head -50
+
+      - name: Install mtd-utils
+        run: sudo apt-get update -q && sudo apt-get install -y mtd-utils
+
+      - name: Locate kernel FIT and rootfs
+        run: |
+          cd fw
+          FIT=$(find . -name '*xiaomi-rd15*fit-uImage.itb' | head -1)
+          [ -z "$FIT" ] && FIT=$(find . -name '*fit-uImage.itb' | head -1)
+          ROOT=$(find . -name '*squashfs-root*.img' -o -name 'root.squashfs' | head -1)
+          echo "FIT=$FIT" >> $GITHUB_ENV
+          echo "ROOT=$ROOT" >> $GITHUB_ENV
+          echo "kernel: $FIT ($(stat -c%s "$FIT") bytes)"
+          echo "rootfs: $ROOT ($(stat -c%s "$ROOT") bytes)"
+          ls -la
+
+      - name: Build UBI image
+        run: |
+          cd fw
+          cat > ubi.cfg <<EOF
+          [kernel]
+          mode=static
+          image=$FIT
+          vol_id=0
+          vol_name=kernel
+          [ubi_rootfs]
+          mode=ubi
+          image=$ROOT
+          vol_id=1
+          vol_name=ubi_rootfs
+          vol_flags=autoresize
+          EOF
+          # pad kernel FIT to 4k multiple for safety
+          ubinize -m 2048 -p 128KiB -o rd15-openwrt.ubi ubi.cfg
+          ls -la rd15-openwrt.ubi
+          xxd rd15-openwrt.ubi | head -3
+
+      - name: Upload flashable image
+        uses: actions/upload-artifact@v4
+        with:
+          name: rd15-flashable-ubi
+          path: fw/rd15-openwrt.ubi
+          retention-days: 14
