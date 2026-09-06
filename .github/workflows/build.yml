@@ -45,6 +45,8 @@ jobs:
           grep -E 'CONFIG_TARGET_(ipq53xx|PROFILE)|CCACHE' .config || true
 
       - name: Build
+        env:
+          FORCE_UNSAFE_CONFIGURE: '1'
         run: |
           mkdir -p /ccache
           make -j$(nproc) || make -j1 V=s
