@@ -866,6 +866,7 @@ dtb-$(CONFIG_ARCH_QCOM) += \
 	ipq5018-mp03.6-c2.dtb \
 	ipq5018-mp05.1.dtb \
 	ipq5018-tb-mp04.dtb \
+	ipq5332-xiaomi-rd15.dtb \
 	ipq5332-emulation.dtb \
 	ipq5332-emulation-fbc.dtb \
 	ipq5332-emulation-ssoc.dtb \
