@@ -1,0 +1,32 @@
+--- a/extensions/LUA/xt_LUA_target.c
++++ b/extensions/LUA/xt_LUA_target.c
+@@ -79,7 +79,7 @@
+ 	spin_lock_irq(&lock);
+ 
+ 	L = lua_envs[info->state_id]->L;
+ 
+-	if (!skb_make_writable(pskb, pskb->len))
++	if (!skb_try_make_writable(pskb, pskb->len))
+ 		return NF_DROP;
+ 
+ 	/* call the function provided by --function parameter or the default 'process_packet' defined in Lua */
+@@ -136,7 +136,7 @@
+ 	int32_t ret;
+ 	struct lua_env * env = kmalloc(sizeof(struct lua_env), GFP_KERNEL);
+ 
+-	if (!script_size > 0) {
++	if (!(script_size > 0)) {
+ 		pr_debug("LUA [%d]: script_size %lu < 0\n", state_id, script_size);
+ 		return false;
+ 	}
+--- a/extensions/xt_DHCPMAC.c
++++ b/extensions/xt_DHCPMAC.c
+@@ -96,7 +96,7 @@
+ 	unsigned char *ptr;
+ 	int i;
+ 
+-	if (!skb_make_writable(skb, 0))
++	if (!skb_try_make_writable(skb, 0))
+ 		return NF_DROP;
+ 
+ 	if (skb_ensure_writable(skb, skb->len))

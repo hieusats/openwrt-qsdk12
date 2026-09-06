@@ -30,6 +30,11 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      - name: Apply local kernel-5.4 compat patches to feeds
+        run: |
+          mkdir -p feeds/packages/net/xtables-addons/patches
+          cp local-patches/*.patch feeds/packages/net/xtables-addons/patches/
+
       - name: Configure
         run: |
           cat > .config <<'EOF'
