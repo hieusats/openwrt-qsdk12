@@ -44,6 +44,7 @@ jobs:
           CONFIG_CCACHE=y
           CONFIG_DEVEL=y
           CONFIG_CCACHE_DIR="/ccache"
+          # CONFIG_PACKAGE_kmod-ipt-nathelper-rtsp is not set
           EOF
           make defconfig
           echo '=== effective target config ==='
@@ -51,7 +52,7 @@ jobs:
 
       - name: Build
         env:
-          FORCE_UNSAFE_CONFIGURE: '1'
+          FORCE_UNSAFE_CONFIGURE: "1"
         run: |
           mkdir -p /ccache
           make -j$(nproc) || make -j1 V=s
