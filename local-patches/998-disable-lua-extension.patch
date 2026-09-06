@@ -1,0 +1,6 @@
+--- a/extensions/Kbuild
++++ b/extensions/Kbuild
+@@ -26,3 +26,2 @@
+ obj-${build_rtsp}        += rtsp/
+-obj-${build_LUA}         += LUA/
+ 
