@@ -1,0 +1,63 @@
+name: Build RD15 QSDK firmware
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ubuntu:20.04
+    timeout-minutes: 340
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update -q
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            build-essential libncurses5-dev libncursesw5-dev zlib1g-dev gawk git gettext \
+            libssl-dev xsltproc wget unzip python2 python3 file rsync ca-certificates curl ccache
+          update-alternatives --install /usr/bin/python python /usr/bin/python2 1 || true
+          gcc --version | head -1
+
+      - name: Free disk space
+        run: |
+          rm -rf /opt/ghc /usr/local/lib/android /usr/share/dotnet /usr/local/graalvm 2>/dev/null || true
+          df -h /
+
+      - uses: actions/checkout@v4
+
+      - name: Feeds
+        run: |
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Configure
+        run: |
+          cat > .config <<'EOF'
+          CONFIG_TARGET_ipq53xx=y
+          CONFIG_TARGET_ipq53xx_ipq53xx_32=y
+          CONFIG_TARGET_ipq53xx_ipq53xx_32_QSDK_256=y
+          CONFIG_CCACHE=y
+          CONFIG_DEVEL=y
+          CONFIG_CCACHE_DIR="/ccache"
+          EOF
+          make defconfig
+          echo '=== effective target config ==='
+          grep -E 'CONFIG_TARGET_(ipq53xx|PROFILE)|CCACHE' .config || true
+
+      - name: Build
+        run: |
+          mkdir -p /ccache
+          make -j$(nproc) || make -j1 V=s
+
+      - name: List outputs
+        run: |
+          find bin -type f | head -100 || true
+          df -h /
+
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rd15-firmware
+          path: |
+            bin/targets/ipq53xx/**/*
+          retention-days: 14
