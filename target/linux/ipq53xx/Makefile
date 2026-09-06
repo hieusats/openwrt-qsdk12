@@ -11,7 +11,10 @@ SUBTARGETS:=generic ipq53xx_32
 
 KERNELNAME:=zImage Image dtbs
 
-LINUX_SRC_VERSION:=$(shell basename $(TOPDIR)/qca/src/linux-*.* | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
+LINUX_SRC_VERSION:=5.4
+# ponytail: was $(shell basename qca/src/linux-*.* | ...) — glob matches BOTH linux-4.4 and
+# linux-5.4 in this tree, silently picking 4.4 → config-5.4 mismatch → kconfig abort. Hardcode 5.4.
+# Original: LINUX_SRC_VERSION:=$(shell basename $(TOPDIR)/qca/src/linux-*.* | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
 # check .config for an overridden Linux dir, otherwise use qca/src/linux
 CONFIG_EXTERNAL_KERNEL_TREE=$(shell \
 	grep -q CONFIG_EXTERNAL_KERNEL_TREE="[^\/]*.\/" $(TOPDIR)/.config && \
